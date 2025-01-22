@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>게임 베타테스트</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>게임 이름</h1>
+      </header>
+
+      <main>
+        <section class="download-section">
+          <h2>최신 버전 다운로드</h2>
+          <% if (version) { %>
+          <p>버전: <%= version.version %></p>
+          <a href="/games/<%= version.filename %>" class="btn download-btn">
+            다운로드
+          </a>
+          <% } else { %>
+          <p>현재 다운로드 가능한 버전이 없습니다.</p>
+          <% } %>
+        </section>
+
+        <section class="feedback-section">
+          <h2>피드백</h2>
+          <p>베타테스트에 참여하시고 피드백을 남겨주세요!</p>
+          <a href="/feedback" class="btn">피드백 게시판 가기</a>
+        </section>
+      </main>
+
+      <footer>
+        <small>&copy; 2025 Your Game Name. All rights reserved.</small>
+      </footer>
+    </div>
+  </body>
+</html>

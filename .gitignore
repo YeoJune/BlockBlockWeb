@@ -1,0 +1,5 @@
+.env
+node_modules/
+public/games/*
+!public/games/.gitkeep
+game.db

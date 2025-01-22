@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>피드백 게시판</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>피드백 게시판</h1>
+        <nav>
+          <a href="/" class="btn">메인으로</a>
+          <a href="/feedback/write" class="btn write-btn">글쓰기</a>
+        </nav>
+      </header>
+
+      <main>
+        <div class="feedback-list">
+          <% if (feedback.length > 0) { %> <% feedback.forEach(post => { %>
+          <article class="feedback-item">
+            <div class="feedback-header">
+              <span class="author"><%= post.author %></span>
+              <span class="version">버전 <%= post.version %></span>
+              <span class="date">
+                <%= new Date(post.created_at).toLocaleDateString() %>
+              </span>
+            </div>
+            <div class="content"><%= post.content %></div>
+          </article>
+          <% }); %> <% } else { %>
+          <p class="no-posts">아직 작성된 피드백이 없습니다.</p>
+          <% } %>
+        </div>
+      </main>
+
+      <footer>
+        <small>&copy; 2025 Your Game Name. All rights reserved.</small>
+      </footer>
+    </div>
+  </body>
+</html>
