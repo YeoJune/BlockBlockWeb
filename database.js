@@ -94,3 +94,37 @@ exports.getAllFeedback = () => {
     );
   });
 };
+
+exports.deleteVersion = (id) => {
+  return new Promise((resolve, reject) => {
+    // 트랜잭션 시작
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION");
+
+      // 해당 버전과 연관된 피드백 먼저 삭제
+      db.run("DELETE FROM feedback WHERE version_id = ?", [id], (err) => {
+        if (err) {
+          db.run("ROLLBACK");
+          return reject(err);
+        }
+
+        // 버전 삭제
+        db.run("DELETE FROM versions WHERE id = ?", [id], (err) => {
+          if (err) {
+            db.run("ROLLBACK");
+            return reject(err);
+          }
+
+          // 변경사항 커밋
+          db.run("COMMIT", (err) => {
+            if (err) {
+              db.run("ROLLBACK");
+              return reject(err);
+            }
+            resolve();
+          });
+        });
+      });
+    });
+  });
+};

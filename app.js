@@ -99,6 +99,28 @@ app.post(
     }
   }
 );
+
+// 라우트: 버전 삭제
+app.post("/admin/delete", adminAuth, async (req, res) => {
+  try {
+    const { version_id, filename } = req.body;
+
+    // 데이터베이스에서 삭제
+    await db.deleteVersion(version_id);
+
+    // 실제 파일 삭제
+    const filePath = path.join(__dirname, "public/games", filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.redirect(`/admin?password=${req.query.password}`);
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).send("Delete failed");
+  }
+});
+
 // 서버 시작
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

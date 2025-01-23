@@ -165,6 +165,22 @@ footer {
   color: #666;
 }
 
+.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.version-table td {
+  vertical-align: middle;
+}
+
+.version-table form {
+  margin: 0;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .container {

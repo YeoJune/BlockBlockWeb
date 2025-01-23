@@ -49,6 +49,7 @@
                 <th>버전</th>
                 <th>파일명</th>
                 <th>업로드 날짜</th>
+                <th>작업</th>
               </tr>
             </thead>
             <tbody>
@@ -57,6 +58,23 @@
                 <td><%= version.version %></td>
                 <td><%= version.filename %></td>
                 <td><%= new Date(version.upload_date).toLocaleString() %></td>
+                <td>
+                  <form
+                    action="/admin/delete?password=<%= password %>"
+                    method="POST"
+                    onsubmit="return confirm('정말 삭제하시겠습니까?');"
+                    style="display: inline">
+                    <input
+                      type="hidden"
+                      name="version_id"
+                      value="<%= version.id %>" />
+                    <input
+                      type="hidden"
+                      name="filename"
+                      value="<%= version.filename %>" />
+                    <button type="submit" class="btn btn-danger">삭제</button>
+                  </form>
+                </td>
               </tr>
               <% }); %>
             </tbody>
