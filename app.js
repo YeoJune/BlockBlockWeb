@@ -5,11 +5,18 @@ const path = require("path");
 const db = require("./database");
 const app = express();
 const port = process.env.PORT || 3000;
+const fs = require("fs");
+const gamesDir = "public/games";
+
+if (!fs.existsSync(gamesDir)) {
+  fs.mkdirSync(gamesDir, { recursive: true });
+}
 
 // 미들웨어 설정
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+app.use("/games", express.static(path.join(__dirname, "public/games")));
 
 // 파일 업로드 설정
 const storage = multer.diskStorage({
