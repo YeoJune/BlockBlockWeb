@@ -16,7 +16,15 @@ if (!fs.existsSync(gamesDir)) {
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
-app.use("/games", express.static(path.join(__dirname, "public/games")));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  "/games",
+  express.static(path.join(__dirname, "public/games"), {
+    setHeaders: (res, path, stat) => {
+      res.set("Content-Disposition", "attachment"); // 다운로드를 위한 헤더 설정
+    },
+  })
+);
 
 // 파일 업로드 설정
 const storage = multer.diskStorage({
