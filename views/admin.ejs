@@ -37,6 +37,15 @@
               <input type="file" id="game_file" name="game_file" required />
             </div>
 
+            <div class="form-group">
+              <label for="platform">플랫폼</label>
+              <select id="platform" name="platform" required>
+                <option value="windows">Windows</option>
+                <option value="android">Android</option>
+                <option value="macos">macOS</option>
+              </select>
+            </div>
+
             <button type="submit" class="btn">업로드</button>
           </form>
         </section>
@@ -47,6 +56,7 @@
             <thead>
               <tr>
                 <th>버전</th>
+                <th>플랫폼</th>
                 <th>파일명</th>
                 <th>업로드 날짜</th>
                 <th>작업</th>
@@ -56,6 +66,7 @@
               <% versions.forEach(version => { %>
               <tr>
                 <td><%= version.version %></td>
+                <td><%= version.platform %></td>
                 <td><%= version.filename %></td>
                 <td><%= new Date(version.upload_date).toLocaleString() %></td>
                 <td>

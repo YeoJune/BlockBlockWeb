@@ -15,11 +15,21 @@
       <main>
         <section class="download-section">
           <h2>최신 버전 다운로드</h2>
-          <% if (version) { %>
-          <p>버전: <%= version.version %></p>
-          <a href="/games/<%= version.filename %>" class="btn download-btn">
-            다운로드
-          </a>
+          <% if (versions && versions.length > 0) { %>
+          <div class="platform-downloads">
+            <% const platforms = { android: 'Android', ios: 'iOS', windows:
+            'Windows', macos: 'macOS', linux: 'Linux' } %> <%
+            Object.entries(groupedVersions).forEach(([platform, version]) => {
+            %>
+            <div class="platform-card">
+              <h3><%= platforms[platform] %></h3>
+              <p>버전: <%= version.version %></p>
+              <a href="/games/<%= version.filename %>" class="btn download-btn">
+                다운로드
+              </a>
+            </div>
+            <% }) %>
+          </div>
           <% } else { %>
           <p>현재 다운로드 가능한 버전이 없습니다.</p>
           <% } %>

@@ -8,6 +8,7 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         version TEXT NOT NULL,
+        platform TEXT NOT NULL,  -- 플랫폼 정보 추가
         filename TEXT NOT NULL,
         upload_date DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
@@ -24,11 +25,11 @@ db.serialize(() => {
 });
 
 // 버전 관련 함수들
-exports.createVersion = (version, filename) => {
+exports.createVersion = (version, platform, filename) => {
   return new Promise((resolve, reject) => {
     db.run(
-      "INSERT INTO versions (version, filename) VALUES (?, ?)",
-      [version, filename],
+      "INSERT INTO versions (version, platform, filename) VALUES (?, ?, ?)",
+      [version, platform, filename],
       (err) => {
         if (err) reject(err);
         else resolve();

@@ -32,7 +32,12 @@ const storage = multer.diskStorage({
     cb(null, "public/games/");
   },
   filename: (req, file, cb) => {
-    cb(null, `game_${req.body.version}${path.extname(file.originalname)}`);
+    cb(
+      null,
+      `game_${req.body.platform}_${req.body.version}${path.extname(
+        file.originalname
+      )}`
+    );
   },
 });
 const upload = multer({ storage: storage });
@@ -49,8 +54,19 @@ const adminAuth = (req, res, next) => {
 
 // 라우트: 메인 페이지
 app.get("/", async (req, res) => {
-  const latestVersion = await db.getLatestVersion();
-  res.render("index", { version: latestVersion });
+  const versions = await db.getAllVersions();
+  const groupedVersions = versions.reduce((acc, version) => {
+    if (
+      !acc[version.platform] ||
+      new Date(version.upload_date) >
+        new Date(acc[version.platform].upload_date)
+    ) {
+      acc[version.platform] = version;
+    }
+    return acc;
+  }, {});
+
+  res.render("index", { versions, groupedVersions });
 });
 
 // 라우트: 피드백 게시판
@@ -89,9 +105,9 @@ app.post(
   upload.single("game_file"),
   async (req, res) => {
     try {
-      const { version } = req.body;
+      const { version, platform } = req.body;
       const filename = req.file.filename;
-      await db.createVersion(version, filename);
+      await db.createVersion(version, platform, filename);
       res.redirect(`/admin?password=${req.query.password}`);
     } catch (error) {
       console.error("Upload error:", error);
