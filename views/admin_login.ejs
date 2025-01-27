@@ -77,10 +77,12 @@
       // 폼 유효성 검사
       function validateForm() {
         const password = document.getElementById("password").value;
-        if (password === "") {
+
+        if (password.trim() === "") {
           alert("비밀번호를 입력해주세요.");
           return false;
         }
+
         return true;
       }
 
