@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
+    <% const platforms = { windows: { name: 'Windows', icon: 'windows-icon' },
+    macos: { name: 'macOS', icon: 'apple-icon' }, android: { name: 'Android',
+    icon: 'android-icon' } } %>
+
     <div class="container">
       <header>
         <h1>Block Block</h1>
@@ -26,11 +30,8 @@
           <h2>최신 버전 다운로드</h2>
           <% if (versions && versions.length > 0) { %>
           <div class="platform-downloads">
-            <% const platforms = { windows: { name: 'Windows', icon:
-            'windows-icon' }, macos: { name: 'macOS', icon: 'apple-icon' },
-            android: { name: 'Android', icon: 'android-icon' } } %> <%
-            versions.forEach(version => { %> <% if (platforms[version.platform])
-            { %>
+            <% versions.forEach(version => { %> <% if
+            (platforms[version.platform]) { %>
             <div class="platform-card">
               <div
                 class="platform-icon <%= platforms[version.platform].icon %>"></div>
@@ -64,12 +65,11 @@
             <div class="patch-note-header">
               <h3>
                 버전 <%= patchNote.version %> (<%=
-                platforms[patchNote.platform]?.name %>)
+                platforms[patchNote.platform]?.name || patchNote.platform %>)
               </h3>
-              <span class="date"
-                ><%= new Date(patchNote.created_at).toLocaleDateString()
-                %></span
-              >
+              <span class="date">
+                <%= new Date(patchNote.created_at).toLocaleDateString() %>
+              </span>
             </div>
             <div class="patch-note-content">
               <%- patchNote.content.replace(/\n/g, '<br />') %>
