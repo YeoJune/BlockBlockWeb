@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>피드백 게시판</title>
+    <title>피드백 게시판 - Block Block</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
@@ -12,32 +12,117 @@
         <h1>피드백 게시판</h1>
         <nav>
           <a href="/" class="btn">메인으로</a>
+          <a href="/versions" class="btn">버전 목록</a>
+          <a href="/patch-notes" class="btn">패치노트</a>
           <a href="/feedback/write" class="btn write-btn">글쓰기</a>
+          <% if (isAdmin) { %>
+          <a href="/admin" class="btn admin-btn">관리자</a>
+          <% } %>
         </nav>
       </header>
 
       <main>
+        <div class="feedback-controls">
+          <div class="filter-section">
+            <select id="typeFilter" onchange="filterFeedback()">
+              <option value="all">모든 유형</option>
+              <option value="bug">버그 리포트</option>
+              <option value="feature">기능 제안</option>
+              <option value="balance">밸런스 피드백</option>
+              <option value="general">일반 의견</option>
+            </select>
+            <select id="versionFilter" onchange="filterFeedback()">
+              <option value="all">모든 버전</option>
+              <% versions.forEach(version => { %>
+              <option value="<%= version.id %>">
+                <%= version.version %> (<%= version.platform %>)
+              </option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
         <div class="feedback-list">
           <% if (feedback.length > 0) { %> <% feedback.forEach(post => { %>
-          <article class="feedback-item">
+          <article
+            class="feedback-item"
+            data-type="<%= post.type %>"
+            data-version="<%= post.version_id %>">
             <div class="feedback-header">
-              <span class="author"><%= post.author %></span>
-              <span class="version">버전 <%= post.version %></span>
-              <span class="date">
-                <%= new Date(post.created_at).toLocaleDateString() %>
-              </span>
+              <div class="feedback-meta">
+                <span class="author"><%= post.author %></span>
+                <span class="version">버전 <%= post.version %></span>
+                <span class="date">
+                  <%= new Date(post.created_at).toLocaleDateString() %>
+                </span>
+              </div>
+              <div class="feedback-type <%= post.type %>">
+                <% const typeLabels = { bug: '버그 리포트', feature: '기능
+                제안', balance: '밸런스 피드백', general: '일반 의견' } %> <%=
+                typeLabels[post.type] %>
+              </div>
             </div>
-            <div class="content"><%= post.content %></div>
+
+            <div class="content">
+              <%- post.content.replace(/\n/g, '<br />') %>
+            </div>
+
+            <% if (isAdmin) { %>
+            <div class="admin-controls">
+              <form
+                action="/feedback/delete"
+                method="POST"
+                onsubmit="return confirm('이 피드백을 삭제하시겠습니까?');">
+                <input
+                  type="hidden"
+                  name="feedback_id"
+                  value="<%= post.id %>" />
+                <button type="submit" class="btn delete-btn">삭제</button>
+              </form>
+            </div>
+            <% } %>
           </article>
           <% }); %> <% } else { %>
           <p class="no-posts">아직 작성된 피드백이 없습니다.</p>
           <% } %>
         </div>
+
+        <div class="pagination">
+          <!-- 페이지네이션은 필요시 추가 예정 -->
+        </div>
       </main>
 
       <footer>
-        <small>&copy; 2025 Block Block. All rights reserved.</small>
+        <div class="footer-content">
+          <p>&copy; 2025 Block Block. All rights reserved.</p>
+          <nav class="footer-nav">
+            <a href="/">메인으로</a>
+            <a href="/versions">버전 목록</a>
+            <a href="/patch-notes">패치노트</a>
+          </nav>
+        </div>
       </footer>
     </div>
+
+    <script>
+      function filterFeedback() {
+        const typeFilter = document.getElementById("typeFilter").value;
+        const versionFilter = document.getElementById("versionFilter").value;
+        const feedbackItems = document.querySelectorAll(".feedback-item");
+
+        feedbackItems.forEach((item) => {
+          const matchesType =
+            typeFilter === "all" || item.dataset.type === typeFilter;
+          const matchesVersion =
+            versionFilter === "all" || item.dataset.version === versionFilter;
+
+          if (matchesType && matchesVersion) {
+            item.style.display = "block";
+          } else {
+            item.style.display = "none";
+          }
+        });
+      }
+    </script>
   </body>
 </html>

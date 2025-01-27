@@ -1,27 +1,53 @@
+// app.js
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const db = require("./database");
+const session = require("express-session");
+const SQLiteStore = require("connect-sqlite3")(session);
+const bcrypt = require("bcrypt");
+const fs = require("fs");
+
 const app = express();
 const port = process.env.PORT || 3000;
-const fs = require("fs");
 const gamesDir = "public/games";
 
+// 게임 파일 저장 디렉토리 생성
 if (!fs.existsSync(gamesDir)) {
   fs.mkdirSync(gamesDir, { recursive: true });
 }
 
 // 미들웨어 설정
+app.use(express.json());
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+
+// 세션 설정
+app.use(
+  session({
+    store: new SQLiteStore({
+      db: "sessions.db",
+      dir: ".",
+    }),
+    secret: process.env.SESSION_SECRET || "catiscute",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 24시간
+    },
+  })
+);
+
+// 정적 파일 제공 설정
 app.use(express.static(path.join(__dirname, "public")));
 app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
     setHeaders: (res, path, stat) => {
-      res.set("Content-Disposition", "attachment"); // 다운로드를 위한 헤더 설정
+      res.set("Content-Disposition", "attachment");
     },
   })
 );
@@ -32,92 +58,219 @@ const storage = multer.diskStorage({
     cb(null, "public/games/");
   },
   filename: (req, file, cb) => {
-    cb(
-      null,
-      `game_${req.body.platform}_${req.body.version}${path.extname(
-        file.originalname
-      )}`
-    );
+    const { major, minor, patch, platform } = req.body;
+    const version = `v${major}.${minor}.${patch}`;
+    cb(null, `game_${platform}_${version}${path.extname(file.originalname)}`);
   },
 });
 const upload = multer({ storage: storage });
 
-// 관리자 인증 미들웨어
-const adminAuth = (req, res, next) => {
-  const { password } = req.query;
-  if (password === process.env.ADMIN_PASSWORD) {
+// 세션 체크 미들웨어
+const requireLogin = (req, res, next) => {
+  if (req.session.adminId) {
     next();
   } else {
-    res.status(401).send("Unauthorized");
+    res.redirect("/admin/login");
   }
+};
+
+// 버전 문자열 파싱 함수
+const parseVersion = (versionStr) => {
+  const match = versionStr.match(/v?(\d+)\.(\d+)\.(\d+)/);
+  if (!match) return null;
+  return {
+    major: parseInt(match[1]),
+    minor: parseInt(match[2]),
+    patch: parseInt(match[3]),
+  };
 };
 
 // 라우트: 메인 페이지
 app.get("/", async (req, res) => {
-  const versions = await db.getAllVersions();
-  const groupedVersions = versions.reduce((acc, version) => {
-    if (
-      !acc[version.platform] ||
-      new Date(version.upload_date) >
-        new Date(acc[version.platform].upload_date)
-    ) {
-      acc[version.platform] = version;
-    }
-    return acc;
-  }, {});
+  try {
+    const latestVersions = await db.getLatestVersions();
+    const latestPatchNote = await db.getLatestPatchNote();
+    res.render("index", {
+      versions: latestVersions,
+      patchNote: latestPatchNote,
+      isAdmin: !!req.session.adminId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
 
-  res.render("index", { versions, groupedVersions });
+// 라우트: 버전 목록 페이지
+app.get("/versions", async (req, res) => {
+  try {
+    const groupedVersions = await db.getVersionsByPlatform();
+    res.render("versions", {
+      groupedVersions,
+      isAdmin: !!req.session.adminId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
+// 라우트: 패치노트 페이지
+app.get("/patch-notes", async (req, res) => {
+  try {
+    const patchNotes = await db.getPatchNotes();
+    res.render("patch_notes", {
+      patchNotes,
+      isAdmin: !!req.session.adminId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
+// 패치노트 조회 API
+app.get("/api/patch-notes/:versionId", requireLogin, async (req, res) => {
+  try {
+    const versionId = req.params.versionId;
+    const patchNote = await db.getPatchNoteByVersionId(versionId);
+    res.json(patchNote);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "서버 오류가 발생했습니다." });
+  }
 });
 
 // 라우트: 피드백 게시판
 app.get("/feedback", async (req, res) => {
-  const feedback = await db.getAllFeedback();
-  const versions = await db.getAllVersions();
-  res.render("feedback", { feedback, versions });
+  try {
+    const feedback = await db.getAllFeedback();
+    const versions = await db.getAllVersions();
+    res.render("feedback", {
+      feedback,
+      versions,
+      isAdmin: !!req.session.adminId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
 });
 
 // 라우트: 글쓰기 페이지
 app.get("/feedback/write", async (req, res) => {
-  const versions = await db.getAllVersions();
-  res.render("write", { versions });
+  try {
+    const versions = await db.getAllVersions();
+    res.render("write", {
+      versions,
+      isAdmin: !!req.session.adminId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
 });
 
 // 라우트: 피드백 작성 처리
 app.post("/feedback", async (req, res) => {
-  const { version_id, author, content } = req.body;
-  await db.createFeedback(version_id, author, content);
-  res.redirect("/feedback");
+  try {
+    const { version_id, author, content, type } = req.body;
+    await db.createFeedback(version_id, author, content, type);
+    res.redirect("/feedback");
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
+// 라우트: 피드백 삭제 (관리자 전용)
+app.post("/feedback/delete", requireLogin, async (req, res) => {
+  try {
+    const { feedback_id } = req.body;
+    await db.deleteFeedback(feedback_id);
+    res.redirect("/feedback");
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
+// 라우트: 관리자 로그인 페이지
+app.get("/admin/login", (req, res) => {
+  if (req.session.adminId) {
+    res.redirect("/admin");
+  } else {
+    res.render("admin_login", { error: null });
+  }
+});
+
+// 라우트: 관리자 로그인 처리
+app.post("/admin/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const admin = await db.getAdmin(username);
+
+    if (admin && (await bcrypt.compare(password, admin.password_hash))) {
+      req.session.adminId = admin.id;
+      res.redirect("/admin");
+    } else {
+      res.render("admin_login", { error: "잘못된 로그인 정보입니다." });
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
+// 라우트: 관리자 로그아웃
+app.get("/admin/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/");
 });
 
 // 라우트: 관리자 페이지
-app.get("/admin", adminAuth, async (req, res) => {
-  const versions = await db.getAllVersions();
-  res.render("admin", {
-    versions,
-    password: req.query.password,
-  });
+app.get("/admin", requireLogin, async (req, res) => {
+  try {
+    const versions = await db.getAllVersions();
+    res.render("admin", { versions });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
 });
 
 // 라우트: 게임 파일 업로드
 app.post(
   "/admin/upload",
-  adminAuth,
+  requireLogin,
   upload.single("game_file"),
   async (req, res) => {
     try {
-      const { version, platform } = req.body;
+      const { major, minor, patch, platform } = req.body;
       const filename = req.file.filename;
-      await db.createVersion(version, platform, filename);
-      res.redirect(`/admin?password=${req.query.password}`);
+      const versionId = await db.createVersion(
+        parseInt(major),
+        parseInt(minor),
+        parseInt(patch),
+        platform,
+        filename
+      );
+
+      // 패치노트가 제공된 경우 저장
+      if (req.body.patch_note) {
+        await db.createPatchNote(versionId, req.body.patch_note);
+      }
+
+      res.redirect("/admin");
     } catch (error) {
       console.error("Upload error:", error);
-      res.status(500).send("Upload failed");
+      res.status(500).send("업로드 중 오류가 발생했습니다.");
     }
   }
 );
 
 // 라우트: 버전 삭제
-app.post("/admin/delete", adminAuth, async (req, res) => {
+app.post("/admin/delete", requireLogin, async (req, res) => {
   try {
     const { version_id, filename } = req.body;
 
@@ -130,14 +283,34 @@ app.post("/admin/delete", adminAuth, async (req, res) => {
       fs.unlinkSync(filePath);
     }
 
-    res.redirect(`/admin?password=${req.query.password}`);
+    res.redirect("/admin");
   } catch (error) {
     console.error("Delete error:", error);
-    res.status(500).send("Delete failed");
+    res.status(500).send("삭제 중 오류가 발생했습니다.");
   }
 });
 
+// 초기 관리자 계정 생성 (환경 변수에서 설정)
+const initializeAdmin = async () => {
+  try {
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (adminUsername && adminPassword) {
+      const existingAdmin = await db.getAdmin(adminUsername);
+      if (!existingAdmin) {
+        const passwordHash = await bcrypt.hash(adminPassword, 10);
+        await db.createAdmin(adminUsername, passwordHash);
+        console.log("Initial admin account created");
+      }
+    }
+  } catch (error) {
+    console.error("Failed to create initial admin account:", error);
+  }
+};
+
 // 서버 시작
-app.listen(port, () => {
+app.listen(port, async () => {
+  await initializeAdmin();
   console.log(`Server running at http://localhost:${port}`);
 });

@@ -3,13 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>게임 베타테스트</title>
+    <title>Block Block - 베타테스트</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
     <div class="container">
       <header>
         <h1>Block Block</h1>
+        <nav>
+          <a href="/versions" class="btn">모든 버전</a>
+          <a href="/patch-notes" class="btn">패치노트</a>
+          <a href="/feedback" class="btn">피드백</a>
+          <% if (isAdmin) { %>
+          <a href="/admin" class="btn admin-btn">관리자</a>
+          <a href="/admin/logout" class="btn logout-btn">로그아웃</a>
+          <% } %>
+        </nav>
       </header>
 
       <main>
@@ -17,33 +26,82 @@
           <h2>최신 버전 다운로드</h2>
           <% if (versions && versions.length > 0) { %>
           <div class="platform-downloads">
-            <% const platforms = { android: 'Android', ios: 'iOS', windows:
-            'Windows', macos: 'macOS', linux: 'Linux' } %> <%
-            Object.entries(groupedVersions).forEach(([platform, version]) => {
-            %>
+            <% const platforms = { windows: { name: 'Windows', icon:
+            'windows-icon' }, macos: { name: 'macOS', icon: 'apple-icon' },
+            android: { name: 'Android', icon: 'android-icon' } } %> <%
+            versions.forEach(version => { %> <% if (platforms[version.platform])
+            { %>
             <div class="platform-card">
-              <h3><%= platforms[platform] %></h3>
-              <p>버전: <%= version.version %></p>
+              <div
+                class="platform-icon <%= platforms[version.platform].icon %>"></div>
+              <h3><%= platforms[version.platform].name %></h3>
+              <p class="version-info">
+                버전: <%= version.version %><br />
+                <small
+                  >업로드: <%= new
+                  Date(version.upload_date).toLocaleDateString() %></small
+                >
+              </p>
               <a href="/games/<%= version.filename %>" class="btn download-btn">
                 다운로드
               </a>
             </div>
-            <% }) %>
+            <% } %> <% }); %>
+          </div>
+          <p class="version-note">
+            이전 버전은 <a href="/versions">버전 목록</a>에서 다운로드
+            가능합니다.
+          </p>
+          <% } else { %>
+          <p class="no-versions">현재 다운로드 가능한 버전이 없습니다.</p>
+          <% } %>
+        </section>
+
+        <section class="patch-note-section">
+          <h2>최신 패치노트</h2>
+          <% if (patchNote) { %>
+          <div class="patch-note">
+            <div class="patch-note-header">
+              <h3>
+                버전 <%= patchNote.version %> (<%=
+                platforms[patchNote.platform]?.name %>)
+              </h3>
+              <span class="date"
+                ><%= new Date(patchNote.created_at).toLocaleDateString()
+                %></span
+              >
+            </div>
+            <div class="patch-note-content">
+              <%- patchNote.content.replace(/\n/g, '<br />') %>
+            </div>
+            <a href="/patch-notes" class="btn view-all-btn"
+              >모든 패치노트 보기</a
+            >
           </div>
           <% } else { %>
-          <p>현재 다운로드 가능한 버전이 없습니다.</p>
+          <p class="no-patch-notes">등록된 패치노트가 없습니다.</p>
           <% } %>
         </section>
 
         <section class="feedback-section">
           <h2>피드백</h2>
           <p>베타테스트에 참여하시고 피드백을 남겨주세요!</p>
-          <a href="/feedback" class="btn">피드백 게시판 가기</a>
+          <div class="feedback-buttons">
+            <a href="/feedback" class="btn">피드백 보기</a>
+            <a href="/feedback/write" class="btn write-btn">피드백 작성</a>
+          </div>
         </section>
       </main>
 
       <footer>
-        <small>&copy; 2025 Block Block. All rights reserved.</small>
+        <div class="footer-content">
+          <p>&copy; 2025 Block Block. All rights reserved.</p>
+          <nav class="footer-nav">
+            <a href="/versions">모든 버전</a>
+            <a href="/patch-notes">패치노트</a>
+            <a href="/feedback">피드백</a>
+          </nav>
+        </div>
       </footer>
     </div>
   </body>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>패치노트 - Block Block</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>패치노트</h1>
+        <nav>
+          <a href="/" class="btn">메인으로</a>
+          <a href="/versions" class="btn">버전 목록</a>
+          <a href="/feedback" class="btn">피드백</a>
+          <% if (isAdmin) { %>
+          <a href="/admin" class="btn admin-btn">관리자</a>
+          <% } %>
+        </nav>
+      </header>
+
+      <main>
+        <div class="patch-notes-container">
+          <% if (patchNotes && patchNotes.length > 0) { %>
+          <div class="filter-section">
+            <select id="platformFilter" onchange="filterPatchNotes()">
+              <option value="all">모든 플랫폼</option>
+              <option value="windows">Windows</option>
+              <option value="macos">macOS</option>
+              <option value="android">Android</option>
+            </select>
+          </div>
+
+          <div class="patch-notes-timeline">
+            <% patchNotes.forEach(note => { %>
+            <div class="patch-note-item" data-platform="<%= note.platform %>">
+              <div class="patch-note-header">
+                <div class="version-info">
+                  <% const platformIcons = { windows: 'windows-icon', macos:
+                  'apple-icon', android: 'android-icon' } %>
+                  <div
+                    class="platform-icon <%= platformIcons[note.platform] %>"></div>
+                  <h2>버전 <%= note.version %></h2>
+                </div>
+                <div class="note-meta">
+                  <span class="platform-badge <%= note.platform %>">
+                    <%= note.platform.charAt(0).toUpperCase() +
+                    note.platform.slice(1) %>
+                  </span>
+                  <span class="date">
+                    <%= new Date(note.created_at).toLocaleDateString() %>
+                  </span>
+                </div>
+              </div>
+
+              <div class="patch-note-content">
+                <%- note.content.split('\n').map(line => { if
+                (line.trim().startsWith('•')) { return `
+                <li>${line.trim().substring(1)}</li>
+                `; } else if (line.trim().startsWith('#')) { return `
+                <h3>${line.trim().substring(1).trim()}</h3>
+                `; } else { return `
+                <p>${line}</p>
+                `; } }).join('') %>
+              </div>
+
+              <div class="patch-note-footer">
+                <a
+                  href="/games/game_<%= note.platform %>_<%= note.version %>.zip"
+                  class="btn download-btn">
+                  이 버전 다운로드
+                </a>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+          <% } else { %>
+          <div class="no-patch-notes">
+            <p>등록된 패치노트가 없습니다.</p>
+          </div>
+          <% } %>
+        </div>
+      </main>
+
+      <footer>
+        <div class="footer-content">
+          <p>&copy; 2025 Block Block. All rights reserved.</p>
+          <nav class="footer-nav">
+            <a href="/">메인으로</a>
+            <a href="/versions">버전 목록</a>
+            <a href="/feedback">피드백</a>
+          </nav>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      function filterPatchNotes() {
+        const platform = document.getElementById("platformFilter").value;
+        const patchNotes = document.querySelectorAll(".patch-note-item");
+
+        patchNotes.forEach((note) => {
+          if (platform === "all" || note.dataset.platform === platform) {
+            note.style.display = "block";
+          } else {
+            note.style.display = "none";
+          }
+        });
+      }
+
+      // 마크다운 스타일 패치노트 포맷팅을 위한 기본 처리
+      document.addEventListener("DOMContentLoaded", () => {
+        const patchNotes = document.querySelectorAll(".patch-note-content");
+        patchNotes.forEach((note) => {
+          // 이미 서버에서 처리된 내용이므로 추가 처리 필요 없음
+        });
+      });
+    </script>
+  </body>
+</html>

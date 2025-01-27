@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>피드백 작성</title>
+    <title>피드백 작성 - Block Block</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
@@ -12,37 +12,150 @@
         <h1>피드백 작성</h1>
         <nav>
           <a href="/feedback" class="btn">목록으로</a>
+          <a href="/" class="btn">메인으로</a>
         </nav>
       </header>
 
       <main>
-        <form class="feedback-form" action="/feedback" method="POST">
-          <div class="form-group">
-            <label for="author">작성자</label>
-            <input type="text" id="author" name="author" required />
-          </div>
+        <div class="write-container">
+          <form
+            class="feedback-form"
+            action="/feedback"
+            method="POST"
+            onsubmit="return validateForm()">
+            <div class="form-group">
+              <label for="author">작성자 *</label>
+              <input
+                type="text"
+                id="author"
+                name="author"
+                required
+                maxlength="20"
+                placeholder="작성자 이름을 입력하세요" />
+              <small class="form-text">최대 20자</small>
+            </div>
 
-          <div class="form-group">
-            <label for="version">게임 버전</label>
-            <select id="version" name="version_id" required>
-              <% versions.forEach(version => { %>
-              <option value="<%= version.id %>"><%= version.version %></option>
-              <% }); %>
-            </select>
-          </div>
+            <div class="form-group">
+              <label for="type">피드백 유형 *</label>
+              <select id="type" name="type" required>
+                <option value="" disabled selected>
+                  피드백 유형을 선택하세요
+                </option>
+                <option value="bug">버그 리포트</option>
+                <option value="feature">기능 제안</option>
+                <option value="balance">밸런스 피드백</option>
+                <option value="general">일반 의견</option>
+              </select>
+              <small class="form-text type-description"></small>
+            </div>
 
-          <div class="form-group">
-            <label for="content">내용</label>
-            <textarea id="content" name="content" rows="10" required></textarea>
-          </div>
+            <div class="form-group">
+              <label for="version_id">게임 버전 *</label>
+              <select id="version_id" name="version_id" required>
+                <option value="" disabled selected>버전을 선택하세요</option>
+                <% versions.forEach(version => { %>
+                <option value="<%= version.id %>">
+                  <%= version.version %> (<%= version.platform %>)
+                </option>
+                <% }); %>
+              </select>
+            </div>
 
-          <button type="submit" class="btn submit-btn">작성하기</button>
-        </form>
+            <div class="form-group">
+              <label for="content">내용 *</label>
+              <div class="content-guide" id="contentGuide"></div>
+              <textarea
+                id="content"
+                name="content"
+                rows="10"
+                required
+                minlength="10"
+                maxlength="3000"
+                placeholder="피드백 내용을 입력하세요"></textarea>
+              <small class="form-text"
+                >최소 10자, 최대 3000자 (<span id="charCount">0</span
+                >/3000)</small
+              >
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn cancel-btn"
+                onclick="history.back()">
+                취소
+              </button>
+              <button type="submit" class="btn submit-btn">작성완료</button>
+            </div>
+          </form>
+        </div>
       </main>
 
       <footer>
-        <small>&copy; 2025 Block Block. All rights reserved.</small>
+        <div class="footer-content">
+          <p>&copy; 2025 Block Block. All rights reserved.</p>
+        </div>
       </footer>
     </div>
+
+    <script>
+      // 피드백 유형별 가이드 텍스트
+      const typeGuides = {
+        bug: "게임에서 발견된 오류나 문제점을 상세히 설명해주세요.",
+        feature: "추가되었으면 하는 기능이나 개선사항을 제안해주세요.",
+        balance: "게임 밸런스와 관련된 의견을 자유롭게 작성해주세요.",
+        general: "게임에 대한 전반적인 의견을 자유롭게 작성해주세요.",
+      };
+
+      // 피드백 유형별 내용 가이드
+      const contentGuides = {
+        bug: `다음 내용을 포함하여 작성해주시면 도움이 됩니다:
+• 발생한 버그 현상
+• 버그 발생 조건/상황
+• 재현 방법
+• 기대한 정상 동작`,
+        feature: `다음 내용을 포함하여 작성해주시면 도움이 됩니다:
+• 제안하는 기능 설명
+• 기대 효과
+• 구체적인 활용 방안`,
+        balance: `다음 내용을 포함하여 작성해주시면 도움이 됩니다:
+• 현재 밸런스 상황
+• 문제점
+• 개선 제안`,
+        general: "게임 경험에 대한 의견을 자유롭게 작성해주세요.",
+      };
+
+      // 피드백 유형 선택 시 가이드 업데이트
+      document.getElementById("type").addEventListener("change", function () {
+        const type = this.value;
+        const typeDescription = document.querySelector(".type-description");
+        const contentGuide = document.getElementById("contentGuide");
+
+        typeDescription.textContent = typeGuides[type] || "";
+        contentGuide.innerHTML =
+          contentGuides[type].replace(/•/g, "<br>•") || "";
+        contentGuide.style.display = type ? "block" : "none";
+      });
+
+      // 글자 수 카운트
+      document.getElementById("content").addEventListener("input", function () {
+        const charCount = this.value.length;
+        document.getElementById("charCount").textContent = charCount;
+      });
+
+      // 폼 유효성 검사
+      function validateForm() {
+        const content = document.getElementById("content").value;
+        if (content.length < 10) {
+          alert("내용은 최소 10자 이상 작성해주세요.");
+          return false;
+        }
+        if (content.length > 3000) {
+          alert("내용은 최대 3000자까지 작성 가능합니다.");
+          return false;
+        }
+        return true;
+      }
+    </script>
   </body>
 </html>

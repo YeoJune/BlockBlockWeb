@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>버전 목록 - Block Block</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>버전 목록</h1>
+        <nav>
+          <a href="/" class="btn">메인으로</a>
+          <a href="/patch-notes" class="btn">패치노트</a>
+          <a href="/feedback" class="btn">피드백</a>
+          <% if (isAdmin) { %>
+          <a href="/admin" class="btn admin-btn">관리자</a>
+          <% } %>
+        </nav>
+      </header>
+
+      <main>
+        <div class="versions-container">
+          <% const platforms = { windows: { name: 'Windows', icon:
+          'windows-icon' }, macos: { name: 'macOS', icon: 'apple-icon' },
+          android: { name: 'Android', icon: 'android-icon' } } %> <%
+          Object.entries(platforms).forEach(([platformKey, platform]) => { %>
+          <section class="platform-section">
+            <div class="platform-header">
+              <div class="<%= platform.icon %>"></div>
+              <h2><%= platform.name %></h2>
+            </div>
+
+            <% if (groupedVersions[platformKey] &&
+            groupedVersions[platformKey].length > 0) { %>
+            <div class="version-list">
+              <% groupedVersions[platformKey].forEach(version => { %>
+              <div class="version-item">
+                <div class="version-info">
+                  <h3>버전 <%= version.version %></h3>
+                  <p class="version-date">
+                    업로드: <%= new
+                    Date(version.upload_date).toLocaleDateString() %>
+                  </p>
+                </div>
+                <div class="version-actions">
+                  <a
+                    href="/games/<%= version.filename %>"
+                    class="btn download-btn"
+                    >다운로드</a
+                  >
+                  <% if (version.patch_note) { %>
+                  <button
+                    class="btn patch-note-btn"
+                    onclick="togglePatchNote('<%= version.id %>')">
+                    패치노트 보기
+                  </button>
+                  <% } %>
+                </div>
+                <% if (version.patch_note) { %>
+                <div
+                  id="patch-note-<%= version.id %>"
+                  class="patch-note-content hidden">
+                  <%- version.patch_note.replace(/\n/g, '<br />') %>
+                </div>
+                <% } %>
+              </div>
+              <% }); %>
+            </div>
+            <% } else { %>
+            <p class="no-versions">
+              <%= platform.name %>용 버전이 아직 없습니다.
+            </p>
+            <% } %>
+          </section>
+          <% }); %>
+        </div>
+      </main>
+
+      <footer>
+        <div class="footer-content">
+          <p>&copy; 2025 Block Block. All rights reserved.</p>
+          <nav class="footer-nav">
+            <a href="/">메인으로</a>
+            <a href="/patch-notes">패치노트</a>
+            <a href="/feedback">피드백</a>
+          </nav>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      function togglePatchNote(versionId) {
+        const patchNoteElement = document.getElementById(
+          `patch-note-${versionId}`
+        );
+        if (patchNoteElement) {
+          patchNoteElement.classList.toggle("hidden");
+        }
+      }
+    </script>
+  </body>
+</html>
