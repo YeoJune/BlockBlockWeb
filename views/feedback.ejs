@@ -33,9 +33,9 @@
             </select>
             <select id="versionFilter" onchange="filterFeedback()">
               <option value="all">모든 버전</option>
-              <% versions.forEach(version => { %>
-              <option value="<%= version.id %>">
-                <%= version.version %> (<%= version.platform %>)
+              <% versions.forEach(function(version) { %>
+              <option value="<%- version.id %>">
+                <%- version.version %> (<%- version.platform %>)
               </option>
               <% }); %>
             </select>
@@ -43,23 +43,24 @@
         </div>
 
         <div class="feedback-list">
-          <% if (feedback.length > 0) { %> <% feedback.forEach(post => { %>
+          <% if (feedback.length > 0) { %> <% feedback.forEach(function(post) {
+          %>
           <article
             class="feedback-item"
-            data-type="<%= post.type %>"
-            data-version="<%= post.version_id %>">
+            data-type="<%- post.type %>"
+            data-version="<%- post.version_id %>">
             <div class="feedback-header">
               <div class="feedback-meta">
-                <span class="author"><%= post.author %></span>
-                <span class="version">버전 <%= post.version %></span>
+                <span class="author"><%- post.author %></span>
+                <span class="version">버전 <%- post.version %></span>
                 <span class="date"
-                  ><%= new Date(post.created_at).toLocaleDateString() %></span
+                  ><%- new Date(post.created_at).toLocaleDateString() %></span
                 >
               </div>
-              <div class="feedback-type <%= post.type %>">
-                <% const typeLabels = {'bug': '버그 리포트', 'feature': '기능
-                제안', 'balance': '밸런스 피드백', 'general': '일반 의견'}; %>
-                <%= typeLabels[post.type] %>
+              <div class="feedback-type <%- post.type %>">
+                <% var labels = { 'bug': '버그 리포트', 'feature': '기능 제안',
+                'balance': '밸런스 피드백', 'general': '일반 의견' }; %> <%-
+                labels[post.type] %>
               </div>
             </div>
 
@@ -76,7 +77,7 @@
                 <input
                   type="hidden"
                   name="feedback_id"
-                  value="<%= post.id %>" />
+                  value="<%- post.id %>" />
                 <button type="submit" class="btn delete-btn">삭제</button>
               </form>
             </div>
@@ -110,7 +111,7 @@
         const versionFilter = document.getElementById("versionFilter").value;
         const feedbackItems = document.querySelectorAll(".feedback-item");
 
-        feedbackItems.forEach((item) => {
+        feedbackItems.forEach(function (item) {
           const matchesType =
             typeFilter === "all" || item.dataset.type === typeFilter;
           const matchesVersion =
