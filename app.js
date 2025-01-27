@@ -196,6 +196,15 @@ app.post("/feedback/delete", requireLogin, async (req, res) => {
 });
 
 // 라우트: 관리자 로그인 페이지
+app.get("/admin/login", (req, res) => {
+  if (req.session.adminId) {
+    res.redirect("/admin");
+  } else {
+    res.render("admin_login", { error: null });
+  }
+});
+
+// 라우트: 관리자 로그인 처리
 app.post("/admin/login", async (req, res) => {
   try {
     const { password } = req.body;
@@ -206,24 +215,6 @@ app.post("/admin/login", async (req, res) => {
       res.redirect("/admin");
     } else {
       res.render("admin_login", { error: "잘못된 비밀번호입니다." });
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).send("서버 오류가 발생했습니다.");
-  }
-});
-
-// 라우트: 관리자 로그인 처리
-app.post("/admin/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const admin = await db.getAdmin(username);
-
-    if (admin && (await bcrypt.compare(password, admin.password_hash))) {
-      req.session.adminId = admin.id;
-      res.redirect("/admin");
-    } else {
-      res.render("admin_login", { error: "잘못된 로그인 정보입니다." });
     }
   } catch (error) {
     console.error("Login error:", error);
