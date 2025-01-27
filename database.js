@@ -40,7 +40,6 @@ db.serialize(() => {
   // 관리자 계정 테이블 생성
   db.run(`CREATE TABLE IF NOT EXISTS admins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
@@ -239,11 +238,11 @@ exports.deleteVersion = (id) => {
 };
 
 // 관리자 인증 관련 함수들
-exports.createAdmin = (username, passwordHash) => {
+exports.createAdmin = (passwordHash) => {
   return new Promise((resolve, reject) => {
     db.run(
-      "INSERT INTO admins (username, password_hash) VALUES (?, ?)",
-      [username, passwordHash],
+      "INSERT INTO admins (password_hash) VALUES (?)",
+      [passwordHash],
       (err) => {
         if (err) reject(err);
         else resolve();
@@ -252,16 +251,12 @@ exports.createAdmin = (username, passwordHash) => {
   });
 };
 
-exports.getAdmin = (username) => {
+exports.getAdmin = () => {
   return new Promise((resolve, reject) => {
-    db.get(
-      "SELECT * FROM admins WHERE username = ?",
-      [username],
-      (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      }
-    );
+    db.get("SELECT * FROM admins LIMIT 1", [], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
   });
 };
 

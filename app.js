@@ -196,11 +196,20 @@ app.post("/feedback/delete", requireLogin, async (req, res) => {
 });
 
 // 라우트: 관리자 로그인 페이지
-app.get("/admin/login", (req, res) => {
-  if (req.session.adminId) {
-    res.redirect("/admin");
-  } else {
-    res.render("admin_login", { error: null });
+app.post("/admin/login", async (req, res) => {
+  try {
+    const { password } = req.body;
+    const admin = await db.getAdmin();
+
+    if (admin && (await bcrypt.compare(password, admin.password_hash))) {
+      req.session.adminId = admin.id;
+      res.redirect("/admin");
+    } else {
+      res.render("admin_login", { error: "잘못된 비밀번호입니다." });
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
   }
 });
 
@@ -293,14 +302,12 @@ app.post("/admin/delete", requireLogin, async (req, res) => {
 // 초기 관리자 계정 생성 (환경 변수에서 설정)
 const initializeAdmin = async () => {
   try {
-    const adminUsername = process.env.ADMIN_USERNAME;
     const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (adminUsername && adminPassword) {
-      const existingAdmin = await db.getAdmin(adminUsername);
+    if (adminPassword) {
+      const existingAdmin = await db.getAdmin();
       if (!existingAdmin) {
         const passwordHash = await bcrypt.hash(adminPassword, 10);
-        await db.createAdmin(adminUsername, passwordHash);
+        await db.createAdmin(passwordHash);
         console.log("Initial admin account created");
       }
     }

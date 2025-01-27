@@ -27,18 +27,7 @@
             <% } %>
 
             <div class="form-group">
-              <label for="username">아이디</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                required
-                autocomplete="username"
-                placeholder="관리자 아이디" />
-            </div>
-
-            <div class="form-group">
-              <label for="password">비밀번호</label>
+              <label for="password">관리자 비밀번호</label>
               <div class="password-input-wrapper">
                 <input
                   type="password"
@@ -46,7 +35,7 @@
                   name="password"
                   required
                   autocomplete="current-password"
-                  placeholder="비밀번호" />
+                  placeholder="비밀번호를 입력하세요" />
                 <button
                   type="button"
                   class="toggle-password"
@@ -60,15 +49,6 @@
               <button type="submit" class="btn login-btn">로그인</button>
             </div>
           </form>
-
-          <div class="security-notice">
-            <p>보안 주의사항:</p>
-            <ul>
-              <li>공용 PC에서 로그인하지 마세요.</li>
-              <li>로그인 후 작업을 마치면 반드시 로그아웃하세요.</li>
-              <li>브라우저의 비밀번호 저장 기능은 사용하지 마세요.</li>
-            </ul>
-          </div>
         </div>
       </main>
 
@@ -96,25 +76,11 @@
 
       // 폼 유효성 검사
       function validateForm() {
-        const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value;
-
-        if (username === "") {
-          alert("아이디를 입력해주세요.");
-          return false;
-        }
-
         if (password === "") {
           alert("비밀번호를 입력해주세요.");
           return false;
         }
-
-        // XSS 방지를 위한 기본적인 검증
-        if (username.includes("<") || username.includes(">")) {
-          alert("아이디에 허용되지 않는 문자가 포함되어 있습니다.");
-          return false;
-        }
-
         return true;
       }
 
