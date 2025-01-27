@@ -52,14 +52,14 @@
               <div class="feedback-meta">
                 <span class="author"><%= post.author %></span>
                 <span class="version">버전 <%= post.version %></span>
-                <span class="date">
-                  <%= new Date(post.created_at).toLocaleDateString() %>
-                </span>
+                <span class="date"
+                  ><%= new Date(post.created_at).toLocaleDateString() %></span
+                >
               </div>
               <div class="feedback-type <%= post.type %>">
-                <% const typeLabels = { bug: '버그 리포트', feature: '기능
-                제안', balance: '밸런스 피드백', general: '일반 의견' } %> <%=
-                typeLabels[post.type] %>
+                <% const typeLabels = {'bug': '버그 리포트', 'feature': '기능
+                제안', 'balance': '밸런스 피드백', 'general': '일반 의견'}; %>
+                <%= typeLabels[post.type] %>
               </div>
             </div>
 
