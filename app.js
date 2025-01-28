@@ -48,17 +48,15 @@ app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
     setHeaders: (res, filePath) => {
-      // 모든 파일에 대해 CORS 허용
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Cross-Origin-Opener-Policy", "same-origin");
-      res.set("Cross-Origin-Embedder-Policy", "require-corp");
-
-      if (filePath.includes(".br")) {
-        res.set("Content-Encoding", "br");
+      if (filePath.endsWith(".js")) {
+        res.set("Content-Type", "application/javascript");
       }
-
-      // 모든 타입 허용
-      res.set("Content-Type", "*/*");
+      if (filePath.endsWith(".wasm")) {
+        res.set("Content-Type", "application/wasm");
+      }
+      if (filePath.endsWith(".data")) {
+        res.set("Content-Type", "application/octet-stream");
+      }
     },
   })
 );
@@ -335,14 +333,21 @@ app.post(
 app.post("/admin/delete", requireLogin, async (req, res) => {
   try {
     const { version_id, filename } = req.body;
+    const version = await db.getVersionById(version_id);
 
     // 데이터베이스에서 삭제
     await db.deleteVersion(version_id);
 
-    // 실제 파일 삭제
+    // 파일 삭제
     const filePath = path.join(__dirname, "public/games", filename);
     if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+      if (version.platform === "webgl") {
+        // WebGL의 경우 디렉토리 전체 삭제
+        fs.rmSync(filePath, { recursive: true, force: true });
+      } else {
+        // 다른 플랫폼은 파일만 삭제
+        fs.unlinkSync(filePath);
+      }
     }
 
     res.redirect("/admin");
