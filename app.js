@@ -8,6 +8,7 @@ const session = require("express-session");
 const SQLiteStore = require("connect-sqlite3")(session);
 const bcrypt = require("bcrypt");
 const fs = require("fs");
+const AdmZip = require("adm-zip");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -267,7 +268,47 @@ app.post(
   async (req, res) => {
     try {
       const { major, minor, patch, platform } = req.body;
-      const filename = req.file.filename;
+      const version = `v${major}.${minor}.${patch}`;
+      let filename = req.file.filename;
+
+      // WebGL 빌드인 경우 zip 파일 처리
+      if (
+        platform === "webgl" &&
+        path.extname(filename).toLowerCase() === ".zip"
+      ) {
+        try {
+          // zip 파일의 전체 경로
+          const zipPath = path.join(__dirname, "public/games", filename);
+          // 압축 해제될 디렉토리 (버전별)
+          const extractPath = path.join(
+            __dirname,
+            "public/games",
+            `webgl_${version}`
+          );
+
+          // zip 파일 읽기
+          const zip = new AdmZip(zipPath);
+
+          // 기존 디렉토리가 있다면 삭제
+          if (fs.existsSync(extractPath)) {
+            fs.rmSync(extractPath, { recursive: true, force: true });
+          }
+
+          // 압축 해제
+          zip.extractAllTo(extractPath, true);
+
+          // zip 파일 삭제
+          fs.unlinkSync(zipPath);
+
+          // filename을 압축 해제된 디렉토리 이름으로 업데이트
+          filename = `webgl_${version}`;
+        } catch (error) {
+          console.error("Error extracting zip:", error);
+          throw new Error("WebGL 빌드 압축 해제 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 버전 데이터베이스에 저장
       const versionId = await db.createVersion(
         parseInt(major),
         parseInt(minor),
@@ -284,7 +325,7 @@ app.post(
       res.redirect("/admin");
     } catch (error) {
       console.error("Upload error:", error);
-      res.status(500).send("업로드 중 오류가 발생했습니다.");
+      res.status(500).send(error.message || "업로드 중 오류가 발생했습니다.");
     }
   }
 );
