@@ -48,25 +48,17 @@ app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
     setHeaders: (res, filePath) => {
-      // .br 파일에 대한 Content-Encoding 설정
-      if (filePath.endsWith(".br")) {
-        res.set("Content-Encoding", "br");
+      // 모든 파일에 대해 CORS 허용
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Cross-Origin-Opener-Policy", "same-origin");
+      res.set("Cross-Origin-Embedder-Policy", "require-corp");
 
-        // 파일 타입별 Content-Type 설정
-        if (filePath.endsWith(".js.br")) {
-          res.set("Content-Type", "application/javascript");
-        } else if (filePath.endsWith(".wasm.br")) {
-          res.set("Content-Type", "application/wasm");
-        } else if (filePath.endsWith(".data.br")) {
-          res.set("Content-Type", "application/octet-stream");
-        }
+      if (filePath.includes(".br")) {
+        res.set("Content-Encoding", "br");
       }
-      // 일반 파일에 대한 Content-Type 설정
-      else if (filePath.endsWith(".js")) {
-        res.set("Content-Type", "application/javascript");
-      } else if (filePath.endsWith(".wasm")) {
-        res.set("Content-Type", "application/wasm");
-      }
+
+      // 모든 타입 허용
+      res.set("Content-Type", "*/*");
     },
   })
 );
