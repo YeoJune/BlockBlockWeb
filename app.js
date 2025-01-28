@@ -48,14 +48,23 @@ app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
     setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".unityweb")) {
+      if (filePath.endsWith(".data.br")) {
         res.set("Content-Type", "application/octet-stream");
+        res.set("Content-Encoding", "br");
+      }
+      if (filePath.endsWith(".js.br")) {
+        res.set("Content-Type", "application/javascript");
+        res.set("Content-Encoding", "br");
+      }
+      if (filePath.endsWith(".wasm.br")) {
+        res.set("Content-Type", "application/wasm");
+        res.set("Content-Encoding", "br");
       }
       if (filePath.endsWith(".js")) {
         res.set("Content-Type", "application/javascript");
       }
-      if (filePath.endsWith(".wasm")) {
-        res.set("Content-Type", "application/wasm");
+      if (filePath.endsWith(".unityweb")) {
+        res.set("Content-Type", "application/octet-stream");
       }
     },
   })
@@ -65,14 +74,13 @@ app.use(
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (req.body.platform === "webgl") {
-      // 임시 디렉토리에 먼저 저장
-      const tempDir = "public/games/temp";
+      const tempDir = path.join(__dirname, "public/games/temp");
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
       cb(null, tempDir);
     } else {
-      cb(null, "public/games/");
+      cb(null, path.join(__dirname, "public/games"));
     }
   },
   filename: (req, file, cb) => {
@@ -277,14 +285,11 @@ app.post(
         path.extname(filename).toLowerCase() === ".zip"
       ) {
         try {
-          // 임시 경로의 zip 파일
           const tempZipPath = path.join(
             __dirname,
             "public/games/temp",
             filename
           );
-
-          // 최종 압축 해제 경로
           const extractPath = path.join(
             __dirname,
             "public/games",
@@ -303,13 +308,12 @@ app.post(
           // 임시 zip 파일 삭제
           fs.unlinkSync(tempZipPath);
 
-          // filename 업데이트
+          // DB에 저장할 파일명 업데이트
           filename = `webgl_${version}`;
         } catch (error) {
           console.error("Error extracting zip:", error);
           throw new Error(
-            "WebGL 빌드 압축 해제 중 오류가 발생했습니다. 상세: " +
-              error.message
+            "WebGL 빌드 압축 해제 중 오류가 발생했습니다: " + error.message
           );
         }
       }
@@ -378,7 +382,6 @@ app.get("/play/:versionId", async (req, res) => {
     if (!version || version.platform !== "webgl") {
       return res.status(404).send("게임을 찾을 수 없습니다.");
     }
-    // index.html 파일을 직접 전달
     res.sendFile(
       path.join(__dirname, "public/games", version.filename, "index.html")
     );
