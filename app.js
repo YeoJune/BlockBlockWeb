@@ -333,22 +333,20 @@ app.post(
 app.post("/admin/delete", requireLogin, async (req, res) => {
   try {
     const { version_id, filename } = req.body;
-    const version = await db.getVersionById(version_id);
+
+    // 실제 파일/폴더 삭제
+    const filePath = path.join(__dirname, "public/games", filename);
+    if (fs.existsSync(filePath)) {
+      try {
+        // 폴더면 recursive하게 삭제, 파일이면 그냥 삭제
+        fs.rmSync(filePath, { recursive: true, force: true });
+      } catch (error) {
+        console.error("File delete error:", error);
+      }
+    }
 
     // 데이터베이스에서 삭제
     await db.deleteVersion(version_id);
-
-    // 파일 삭제
-    const filePath = path.join(__dirname, "public/games", filename);
-    if (fs.existsSync(filePath)) {
-      if (version.platform === "webgl") {
-        // WebGL의 경우 디렉토리 전체 삭제
-        fs.rmSync(filePath, { recursive: true, force: true });
-      } else {
-        // 다른 플랫폼은 파일만 삭제
-        fs.unlinkSync(filePath);
-      }
-    }
 
     res.redirect("/admin");
   } catch (error) {
