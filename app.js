@@ -383,7 +383,6 @@ app.get("/play/:versionId", async (req, res) => {
       return res.status(404).send("게임을 찾을 수 없습니다.");
     }
 
-    // index.html 파일을 읽어서 경로를 수정한 후 전송
     const indexPath = path.join(
       __dirname,
       "public/games",
@@ -392,15 +391,18 @@ app.get("/play/:versionId", async (req, res) => {
     );
     let html = fs.readFileSync(indexPath, "utf8");
 
-    // 상대 경로를 절대 경로로 변경
+    // buildUrl 변수 수정 및 모든 경로를 절대 경로로 변경
     html = html.replace(
-      /href="TemplateData/g,
-      `href="/games/${version.filename}/TemplateData`
+      'var buildUrl = "Build"',
+      `var buildUrl = "/games/${version.filename}/Build"`
     );
-    html = html.replace(/src="Build/g, `src="/games/${version.filename}/Build`);
     html = html.replace(
-      /streamingAssetsUrl: "StreamingAssets/g,
-      `streamingAssetsUrl: "/games/${version.filename}/StreamingAssets`
+      /href="TemplateData\//g,
+      `href="/games/${version.filename}/TemplateData/`
+    );
+    html = html.replace(
+      'streamingAssetsUrl: "StreamingAssets"',
+      `streamingAssetsUrl: "/games/${version.filename}/StreamingAssets"`
     );
 
     res.send(html);
