@@ -382,9 +382,28 @@ app.get("/play/:versionId", async (req, res) => {
     if (!version || version.platform !== "webgl") {
       return res.status(404).send("게임을 찾을 수 없습니다.");
     }
-    res.sendFile(
-      path.join(__dirname, "public/games", version.filename, "index.html")
+
+    // index.html 파일을 읽어서 경로를 수정한 후 전송
+    const indexPath = path.join(
+      __dirname,
+      "public/games",
+      version.filename,
+      "index.html"
     );
+    let html = fs.readFileSync(indexPath, "utf8");
+
+    // 상대 경로를 절대 경로로 변경
+    html = html.replace(
+      /href="TemplateData/g,
+      `href="/games/${version.filename}/TemplateData`
+    );
+    html = html.replace(/src="Build/g, `src="/games/${version.filename}/Build`);
+    html = html.replace(
+      /streamingAssetsUrl: "StreamingAssets/g,
+      `streamingAssetsUrl: "/games/${version.filename}/StreamingAssets`
+    );
+
+    res.send(html);
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("서버 오류가 발생했습니다.");
