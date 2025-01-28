@@ -65,11 +65,12 @@ app.use(
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (req.body.platform === "webgl") {
-      const versionDir = `public/games/webgl_v${req.body.major}.${req.body.minor}.${req.body.patch}`;
-      if (!fs.existsSync(versionDir)) {
-        fs.mkdirSync(versionDir, { recursive: true });
+      // 임시 디렉토리에 먼저 저장
+      const tempDir = "public/games/temp";
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
       }
-      cb(null, versionDir);
+      cb(null, tempDir);
     } else {
       cb(null, "public/games/");
     }
@@ -271,44 +272,48 @@ app.post(
       const version = `v${major}.${minor}.${patch}`;
       let filename = req.file.filename;
 
-      // WebGL 빌드인 경우 zip 파일 처리
       if (
         platform === "webgl" &&
         path.extname(filename).toLowerCase() === ".zip"
       ) {
         try {
-          // zip 파일의 전체 경로
-          const zipPath = path.join(__dirname, "public/games", filename);
-          // 압축 해제될 디렉토리 (버전별)
+          // 임시 경로의 zip 파일
+          const tempZipPath = path.join(
+            __dirname,
+            "public/games/temp",
+            filename
+          );
+
+          // 최종 압축 해제 경로
           const extractPath = path.join(
             __dirname,
             "public/games",
             `webgl_${version}`
           );
 
-          // zip 파일 읽기
-          const zip = new AdmZip(zipPath);
-
           // 기존 디렉토리가 있다면 삭제
           if (fs.existsSync(extractPath)) {
             fs.rmSync(extractPath, { recursive: true, force: true });
           }
 
-          // 압축 해제
+          // zip 파일 읽기 및 압축 해제
+          const zip = new AdmZip(tempZipPath);
           zip.extractAllTo(extractPath, true);
 
-          // zip 파일 삭제
-          fs.unlinkSync(zipPath);
+          // 임시 zip 파일 삭제
+          fs.unlinkSync(tempZipPath);
 
-          // filename을 압축 해제된 디렉토리 이름으로 업데이트
+          // filename 업데이트
           filename = `webgl_${version}`;
         } catch (error) {
           console.error("Error extracting zip:", error);
-          throw new Error("WebGL 빌드 압축 해제 중 오류가 발생했습니다.");
+          throw new Error(
+            "WebGL 빌드 압축 해제 중 오류가 발생했습니다. 상세: " +
+              error.message
+          );
         }
       }
 
-      // 버전 데이터베이스에 저장
       const versionId = await db.createVersion(
         parseInt(major),
         parseInt(minor),
@@ -317,7 +322,6 @@ app.post(
         filename
       );
 
-      // 패치노트가 제공된 경우 저장
       if (req.body.patch_note) {
         await db.createPatchNote(versionId, req.body.patch_note);
       }
