@@ -170,7 +170,7 @@ textarea {
   padding: 20px;
   text-align: center;
   background: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .platform-card h3 {
@@ -231,4 +231,39 @@ footer {
   nav {
     flex-direction: column;
   }
+}
+
+.webgl-section {
+  background: #f5f5f5;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.webgl-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.play-btn {
+  background-color: #4caf50;
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  margin-top: 1rem;
+}
+
+.play-btn:hover {
+  background-color: #45a049;
+}
+
+.web-icon {
+  background-image: url("/images/web-icon.png");
+  /* 다른 아이콘들과 동일한 스타일 적용 */
+  width: 48px;
+  height: 48px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin: 0 auto 1rem;
 }

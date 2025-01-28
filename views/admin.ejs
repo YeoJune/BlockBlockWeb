@@ -73,7 +73,9 @@
                 name="game_file"
                 required
                 accept=".zip,.exe,.apk" />
-              <small class="form-text">지원 형식: .zip, .exe, .apk</small>
+              <small class="form-text">
+                지원 형식: Windows(.exe), macOS/WebGL(.zip), Android(.apk)
+              </small>
             </div>
 
             <div class="form-group">
@@ -100,11 +102,12 @@
         <section class="version-management">
           <h2>버전 관리</h2>
           <div class="version-filters">
-            <select id="platformFilter" onchange="filterVersions()">
-              <option value="all">모든 플랫폼</option>
+            <select id="platform" name="platform" required>
+              <option value="" disabled selected>플랫폼 선택</option>
               <option value="windows">Windows</option>
               <option value="macos">macOS</option>
               <option value="android">Android</option>
+              <option value="webgl">WebGL</option>
             </select>
           </div>
 

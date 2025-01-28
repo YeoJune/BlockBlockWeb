@@ -46,8 +46,16 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
-    setHeaders: (res, path, stat) => {
-      res.set("Content-Disposition", "attachment");
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".unityweb")) {
+        res.set("Content-Type", "application/octet-stream");
+      }
+      if (filePath.endsWith(".js")) {
+        res.set("Content-Type", "application/javascript");
+      }
+      if (filePath.endsWith(".wasm")) {
+        res.set("Content-Type", "application/wasm");
+      }
     },
   })
 );
@@ -55,12 +63,24 @@ app.use(
 // 파일 업로드 설정
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/games/");
+    if (req.body.platform === "webgl") {
+      const versionDir = `public/games/webgl_v${req.body.major}.${req.body.minor}.${req.body.patch}`;
+      if (!fs.existsSync(versionDir)) {
+        fs.mkdirSync(versionDir, { recursive: true });
+      }
+      cb(null, versionDir);
+    } else {
+      cb(null, "public/games/");
+    }
   },
   filename: (req, file, cb) => {
-    const { major, minor, patch, platform } = req.body;
-    const version = `v${major}.${minor}.${patch}`;
-    cb(null, `game_${platform}_${version}${path.extname(file.originalname)}`);
+    if (req.body.platform === "webgl") {
+      cb(null, file.originalname);
+    } else {
+      const { major, minor, patch, platform } = req.body;
+      const version = `v${major}.${minor}.${patch}`;
+      cb(null, `game_${platform}_${version}${path.extname(file.originalname)}`);
+    }
   },
 });
 const upload = multer({ storage: storage });
@@ -306,6 +326,22 @@ const initializeAdmin = async () => {
     console.error("Failed to create initial admin account:", error);
   }
 };
+
+app.get("/play/:versionId", async (req, res) => {
+  try {
+    const version = await db.getVersionById(req.params.versionId);
+    if (!version || version.platform !== "webgl") {
+      return res.status(404).send("게임을 찾을 수 없습니다.");
+    }
+    res.render("play", {
+      version,
+      isAdmin: !!req.session.adminId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
 
 // 서버 시작
 app.listen(port, async () => {

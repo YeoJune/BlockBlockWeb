@@ -9,7 +9,7 @@
   <body>
     <% const platforms = { windows: { name: 'Windows', icon: 'windows-icon' },
     macos: { name: 'macOS', icon: 'apple-icon' }, android: { name: 'Android',
-    icon: 'android-icon' } } %>
+    icon: 'android-icon' }, webgl: { name: 'WebGL', icon: 'web-icon' } } %>
 
     <div class="container">
       <header>
@@ -26,6 +26,24 @@
       </header>
 
       <main>
+        <section class="webgl-section">
+          <% const webglVersion = versions.find(v => v.platform === 'webgl') %>
+          <% if (webglVersion) { %>
+          <h2>웹 버전 플레이</h2>
+          <div class="webgl-container">
+            <p class="version-info">
+              버전: <%= webglVersion.version %>
+              <small
+                >(업데이트: <%= new
+                Date(webglVersion.upload_date).toLocaleDateString() %>)</small
+              >
+            </p>
+            <a href="/play/<%= webglVersion.id %>" class="btn play-btn"
+              >게임 시작</a
+            >
+          </div>
+          <% } %>
+        </section>
         <section class="download-section">
           <h2>최신 버전 다운로드</h2>
           <% if (versions && versions.length > 0) { %>

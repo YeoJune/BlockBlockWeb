@@ -260,4 +260,29 @@ exports.getAdmin = () => {
   });
 };
 
+exports.getVersionById = (id) => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT * FROM versions WHERE id = ?", [id], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+exports.getLatestWebGLVersion = () => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT * FROM versions 
+       WHERE platform = 'webgl' 
+       ORDER BY major_version DESC, minor_version DESC, patch_version DESC 
+       LIMIT 1`,
+      [],
+      (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      }
+    );
+  });
+};
+
 module.exports = exports;
