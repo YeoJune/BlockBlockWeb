@@ -378,10 +378,10 @@ app.get("/play/:versionId", async (req, res) => {
     if (!version || version.platform !== "webgl") {
       return res.status(404).send("게임을 찾을 수 없습니다.");
     }
-    res.render("play", {
-      version,
-      isAdmin: !!req.session.adminId,
-    });
+    // index.html 파일을 직접 전달
+    res.sendFile(
+      path.join(__dirname, "public/games", version.filename, "index.html")
+    );
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("서버 오류가 발생했습니다.");
