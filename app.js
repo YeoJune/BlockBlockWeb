@@ -48,23 +48,24 @@ app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
     setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".data.br")) {
-        res.set("Content-Type", "application/octet-stream");
+      // .br 파일에 대한 Content-Encoding 설정
+      if (filePath.endsWith(".br")) {
         res.set("Content-Encoding", "br");
+
+        // 파일 타입별 Content-Type 설정
+        if (filePath.endsWith(".js.br")) {
+          res.set("Content-Type", "application/javascript");
+        } else if (filePath.endsWith(".wasm.br")) {
+          res.set("Content-Type", "application/wasm");
+        } else if (filePath.endsWith(".data.br")) {
+          res.set("Content-Type", "application/octet-stream");
+        }
       }
-      if (filePath.endsWith(".js.br")) {
+      // 일반 파일에 대한 Content-Type 설정
+      else if (filePath.endsWith(".js")) {
         res.set("Content-Type", "application/javascript");
-        res.set("Content-Encoding", "br");
-      }
-      if (filePath.endsWith(".wasm.br")) {
+      } else if (filePath.endsWith(".wasm")) {
         res.set("Content-Type", "application/wasm");
-        res.set("Content-Encoding", "br");
-      }
-      if (filePath.endsWith(".js")) {
-        res.set("Content-Type", "application/javascript");
-      }
-      if (filePath.endsWith(".unityweb")) {
-        res.set("Content-Type", "application/octet-stream");
       }
     },
   })
