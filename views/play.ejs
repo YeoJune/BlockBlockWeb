@@ -23,23 +23,6 @@
         height: 100%;
         background: #000;
       }
-      #unity-loading-bar {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 20px;
-        background: #333;
-        border-radius: 10px;
-      }
-      #unity-progress-bar-full {
-        width: 0%;
-        height: 100%;
-        background: #4caf50;
-        border-radius: 10px;
-        transition: width 0.1s ease-in-out;
-      }
     </style>
   </head>
   <body>
@@ -61,41 +44,27 @@
         <div class="game-container">
           <div id="unity-container">
             <canvas id="unity-canvas"></canvas>
-            <div id="unity-loading-bar">
-              <div id="unity-progress-bar-full"></div>
-            </div>
           </div>
         </div>
       </main>
     </div>
 
-    <script src="/games/<%= version.filename %>/Build/<%= version.filename %>.loader.js"></script>
+    <!-- Unity WebGL 빌드의 실제 경로와 파일명에 맞춰서 수정 -->
+    <script src="/games/<%= version.filename %>/Build/Build/BlockBlock.loader.js"></script>
     <script>
-      var container = document.getElementById("unity-container");
-      var canvas = document.getElementById("unity-canvas");
-      var loadingBar = document.getElementById("unity-loading-bar");
-      var progressBarFull = document.getElementById("unity-progress-bar-full");
-
-      var buildUrl = "/games/<%= version.filename %>/Build";
-      var config = {
-        dataUrl: buildUrl + "/<%= version.filename %>.data",
-        frameworkUrl: buildUrl + "/<%= version.filename %>.framework.js",
-        codeUrl: buildUrl + "/<%= version.filename %>.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "BlockBlock",
-        productName: "BlockBlock",
-        productVersion: "<%= version.version %>",
-      };
-
-      createUnityInstance(canvas, config, (progress) => {
-        progressBarFull.style.width = 100 * progress + "%";
-      })
-        .then((instance) => {
-          loadingBar.style.display = "none";
-        })
-        .catch((error) => {
-          alert(error);
-        });
+      var unityInstance = createUnityInstance(
+        document.querySelector("#unity-canvas"),
+        {
+          dataUrl: "/games/<%= version.filename %>/Build/Build/BlockBlock.data",
+          frameworkUrl:
+            "/games/<%= version.filename %>/Build/Build/BlockBlock.framework.js",
+          codeUrl: "/games/<%= version.filename %>/Build/Build/BlockBlock.wasm",
+          streamingAssetsUrl: "/games/<%= version.filename %>/StreamingAssets",
+          companyName: "BlockBlock",
+          productName: "BlockBlock",
+          productVersion: "<%= version.version %>",
+        }
+      );
     </script>
   </body>
 </html>
