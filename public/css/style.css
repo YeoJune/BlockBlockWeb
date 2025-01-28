@@ -231,6 +231,10 @@ footer {
   nav {
     flex-direction: column;
   }
+
+  .preview-item {
+    min-width: 250px;
+  }
 }
 
 .webgl-section {
@@ -266,4 +270,35 @@ footer {
   background-size: contain;
   background-repeat: no-repeat;
   margin: 0 auto 1rem;
+}
+
+.game-preview {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.preview-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.preview-item {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.preview-gif {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-description {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  color: #555;
 }
