@@ -387,20 +387,6 @@ app.get("/play/:versionId", async (req, res) => {
     );
     let html = fs.readFileSync(indexPath, "utf8");
 
-    // buildUrl 변수 수정 및 모든 경로를 절대 경로로 변경
-    html = html.replace(
-      'var buildUrl = "Build"',
-      `var buildUrl = "/games/${version.filename}/Build"`
-    );
-    html = html.replace(
-      /href="TemplateData\//g,
-      `href="/games/${version.filename}/TemplateData/`
-    );
-    html = html.replace(
-      'streamingAssetsUrl: "StreamingAssets"',
-      `streamingAssetsUrl: "/games/${version.filename}/StreamingAssets"`
-    );
-
     res.send(html);
   } catch (error) {
     console.error("Error:", error);
