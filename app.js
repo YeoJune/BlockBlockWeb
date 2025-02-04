@@ -48,15 +48,26 @@ app.use(
   "/games",
   express.static(path.join(__dirname, "public/games"), {
     setHeaders: (res, filePath) => {
+      // Unity WebGL 파일들의 MIME 타입 올바르게 설정
       if (filePath.endsWith(".js")) {
         res.set("Content-Type", "application/javascript");
-      }
-      if (filePath.endsWith(".wasm")) {
+      } else if (filePath.endsWith(".wasm")) {
         res.set("Content-Type", "application/wasm");
-      }
-      if (filePath.endsWith(".data")) {
+      } else if (filePath.endsWith(".data")) {
         res.set("Content-Type", "application/octet-stream");
+      } else if (filePath.endsWith(".gz")) {
+        res.set("Content-Encoding", "gzip");
+        // .gz 파일의 실제 타입에 따라 Content-Type 설정
+        if (filePath.endsWith(".js.gz")) {
+          res.set("Content-Type", "application/javascript");
+        } else if (filePath.endsWith(".wasm.gz")) {
+          res.set("Content-Type", "application/wasm");
+        } else if (filePath.endsWith(".data.gz")) {
+          res.set("Content-Type", "application/octet-stream");
+        }
       }
+      // 캐시 설정 추가
+      res.set("Cache-Control", "public, max-age=31536000");
     },
   })
 );
@@ -379,13 +390,26 @@ app.get("/play/:versionId", async (req, res) => {
       return res.status(404).send("게임을 찾을 수 없습니다.");
     }
 
+    // index.html 경로 설정
     const indexPath = path.join(
       __dirname,
       "public/games",
       version.filename,
       "index.html"
     );
+
+    if (!fs.existsSync(indexPath)) {
+      return res.status(404).send("게임 파일을 찾을 수 없습니다.");
+    }
+
+    // HTML 파일 읽기
     let html = fs.readFileSync(indexPath, "utf8");
+
+    // Base path 수정을 위한 처리
+    const basePath = `/games/${version.filename}/`;
+    html = html
+      .replace(/<script src="/g, `<script src="${basePath}`)
+      .replace(/Build\//g, `${basePath}Build/`);
 
     res.send(html);
   } catch (error) {
@@ -393,6 +417,44 @@ app.get("/play/:versionId", async (req, res) => {
     res.status(500).send("서버 오류가 발생했습니다.");
   }
 });
+
+const extractWebGLBuild = async (zipPath, extractPath) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const zip = new AdmZip(zipPath);
+
+      // 기존 폴더가 있다면 삭제
+      if (fs.existsSync(extractPath)) {
+        fs.rmSync(extractPath, { recursive: true, force: true });
+      }
+
+      // 압축 해제
+      zip.extractAllTo(extractPath, true);
+
+      // 추출된 파일들의 권한 설정
+      const walk = (dir) => {
+        const files = fs.readdirSync(dir);
+        files.forEach((file) => {
+          const filePath = path.join(dir, file);
+          const stat = fs.statSync(filePath);
+          if (stat.isDirectory()) {
+            // 디렉토리 권한 설정
+            fs.chmodSync(filePath, 0o755);
+            walk(filePath);
+          } else {
+            // 파일 권한 설정
+            fs.chmodSync(filePath, 0o644);
+          }
+        });
+      };
+
+      walk(extractPath);
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
 
 // 서버 시작
 app.listen(port, async () => {
