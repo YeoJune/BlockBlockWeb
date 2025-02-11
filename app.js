@@ -404,6 +404,19 @@ app.get("/play/:versionId", async (req, res) => {
         `streamingAssetsUrl: "${basePath}StreamingAssets`
       );
 
+    // Fix image URLs in CSS file
+    const cssPath = path.join(gameDir, "TemplateData/style.css");
+    if (fs.existsSync(cssPath)) {
+      let css = fs.readFileSync(cssPath, "utf8");
+      css = css.replace(
+        /url\(['"]?([^'"')]+)['"]?\)/g,
+        (match, url) => `url('${basePath}TemplateData/${url}')`
+      );
+
+      // Inject the modified CSS directly into HTML
+      html = html.replace("</head>", `<style>${css}</style></head>`);
+    }
+
     res.set("Content-Type", "text/html");
     res.send(html);
   } catch (error) {
