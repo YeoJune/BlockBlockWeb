@@ -392,16 +392,13 @@ app.get("/play/:versionId", async (req, res) => {
     }
 
     let html = fs.readFileSync(indexPath, "utf8");
-
-    // Unity 빌드 파일의 경로를 수정
     const basePath = `/games/${version.filename}/`;
 
-    // Build 폴더 내 파일들의 경로 수정
+    // Update resource paths
     html = html
+      .replace('href="TemplateData/', `href="${basePath}TemplateData/`)
+      .replace('var buildUrl = "Build"', `var buildUrl = "${basePath}Build"`)
       .replace('src="Build/', `src="${basePath}Build/`)
-      .replace('dataUrl: "Build/', `dataUrl: "${basePath}Build/`)
-      .replace('frameworkUrl: "Build/', `frameworkUrl: "${basePath}Build/`)
-      .replace('codeUrl: "Build/', `codeUrl: "${basePath}Build/`)
       .replace(
         'streamingAssetsUrl: "StreamingAssets',
         `streamingAssetsUrl: "${basePath}StreamingAssets`
